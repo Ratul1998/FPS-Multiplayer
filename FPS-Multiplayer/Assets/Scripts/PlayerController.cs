@@ -51,7 +51,20 @@ public class PlayerController : MonoBehaviour {
     void Update()
     {
         if (PauseMenu.isOn)
+        {
+            if (Cursor.lockState != CursorLockMode.None)
+                Cursor.lockState = CursorLockMode.None;
+
+            motor.Move(Vector3.zero);
+            motor.Rotate(Vector3.zero);
+            motor.CameraRotate(0f);
             return;
+        }
+
+        if (Cursor.lockState != CursorLockMode.Locked)
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+        }
         //Setting Target Position For Spring
         RaycastHit hit;
         if(Physics.Raycast(transform.position,Vector3.down,out hit, 100f,enviromentMask))

@@ -2,16 +2,21 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
+using System.Linq;
 
 
 
-public class GameManager : NetworkBehaviour {
+public class GameManagers : MonoBehaviour {
 
-    public static GameManager instance;
+    public static GameManagers instance;
     public MatchSettings matchSettings;
 
     [SerializeField]
     private GameObject sceenCamera;
+
+    public delegate void OnPlayerKilledCallback(string player,string source);
+    public OnPlayerKilledCallback onPlayerKilledCallback;
+
 
     #region Player Tracking
     private const string PLAYER_ID_PREFIX = "Player";
@@ -69,6 +74,11 @@ public class GameManager : NetworkBehaviour {
             return;
 
         sceenCamera.SetActive(isActive);
+    }
+
+    public static Player[] GetAllPlayers()
+    {
+        return players.Values.ToArray();
     }
 }
 

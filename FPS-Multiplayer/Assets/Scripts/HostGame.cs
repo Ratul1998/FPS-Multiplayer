@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 
-public class HostGame : NetworkBehaviour {
+public class HostGame : MonoBehaviour {
     [SerializeField]
     private uint roomSize = 4;
 

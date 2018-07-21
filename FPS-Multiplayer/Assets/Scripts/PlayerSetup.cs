@@ -39,7 +39,7 @@ public class PlayerSetup : NetworkBehaviour {
 
             //Configure PlayerUI
             PlayerUI ui = PlayerUIInstance.GetComponent<PlayerUI>();
-            ui.SetController(GetComponent<PlayerController>());
+            ui.SetPlayer (GetComponent<Player>());
 
 
             GetComponent<Player>().PlayerSetup();
@@ -63,7 +63,7 @@ public class PlayerSetup : NetworkBehaviour {
         string _netId = GetComponent<NetworkIdentity>().netId.ToString();
         Player _player = GetComponent<Player>();
 
-        GameManager.RegisterPlayer(_netId, _player);
+        GameManagers.RegisterPlayer(_netId, _player);
     }
     void AssignRemoteLayer()
     {
@@ -83,8 +83,8 @@ public class PlayerSetup : NetworkBehaviour {
     {
         Destroy(PlayerUIInstance);
         if(isLocalPlayer)
-            GameManager.instance.SetSceneCameraActive(true);
+            GameManagers.instance.SetSceneCameraActive(true);
 
-        GameManager.UnRegisterPlayer(transform.name);
+        GameManagers.UnRegisterPlayer(transform.name);
     }
 }

@@ -38,10 +38,9 @@ public class UserAccountManager : MonoBehaviour {
 
         Debug.Log("User logged out!");
 
-        SceneManager.LoadScene(loggedOutSceneName);
     }
 
-    public void LogIn(string username, string password)
+    public void LogInSet(string username, string password)
     {
         LoggedIn_Username = username;
         LoggedIn_Password = password;
@@ -50,7 +49,6 @@ public class UserAccountManager : MonoBehaviour {
 
         Debug.Log("Logged in as " + username);
 
-        SceneManager.LoadScene(loggedInSceneName);
     }
 
     public void SendData(string data)

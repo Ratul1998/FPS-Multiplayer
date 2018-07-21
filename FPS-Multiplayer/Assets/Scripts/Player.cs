@@ -13,8 +13,10 @@ public class Player : NetworkBehaviour {
         protected set { _isDead = value; }
     }
     [SerializeField]
-    private int maxHealth = 100;
+    private float maxHealth = 100f;
 
+    public int kills;
+    public int deaths;
 
     [SerializeField]
     private Behaviour[] disableOnDeath;
@@ -24,7 +26,7 @@ public class Player : NetworkBehaviour {
     private GameObject[] disableGameObjectOnDeath;
 
     [SyncVar]
-    private int currentHealth;
+    private float currentHealth;
 
     [SerializeField]
     private GameObject Explosion;
@@ -38,7 +40,7 @@ public class Player : NetworkBehaviour {
     {
         if (isLocalPlayer)
         {
-            GameManager.instance.SetSceneCameraActive(false);
+            GameManagers.instance.SetSceneCameraActive(false);
             GetComponent<PlayerSetup>().PlayerUIInstance.SetActive(true);
         }
         CmdBroadCastNewPlayerSetup();
@@ -93,7 +95,7 @@ public class Player : NetworkBehaviour {
     }
     [ClientRpc]
 
-    public void RpcTakeDamage(int amt)
+    public void RpcTakeDamage(float amt)
     {
         if (isDead)
             return;
@@ -108,8 +110,6 @@ public class Player : NetworkBehaviour {
     void Die()
     {
         isDead = true;
-        //Disable Components
-
         for(int i = 0; i < disableOnDeath.Length; i++)
         {
             disableOnDeath[i].enabled = false;
@@ -132,7 +132,7 @@ public class Player : NetworkBehaviour {
 
         if (isLocalPlayer)
         {
-            GameManager.instance.SetSceneCameraActive(true);
+            GameManagers.instance.SetSceneCameraActive(true);
             GetComponent<PlayerSetup>().PlayerUIInstance.SetActive(false);
         }
 
@@ -143,7 +143,7 @@ public class Player : NetworkBehaviour {
 
     IEnumerator Respawn()
     {
-        yield return new WaitForSeconds(GameManager.instance.matchSettings.respwantime);
+        yield return new WaitForSeconds(GameManagers.instance.matchSettings.respwantime);
         
         Transform _startPoint = NetworkManager.singleton.GetStartPosition();
         transform.position = _startPoint.position;
@@ -164,10 +164,13 @@ public class Player : NetworkBehaviour {
         }
         if (Input.GetKeyDown(KeyCode.K))
         {
-            RpcTakeDamage(200);
+            RpcTakeDamage(10f);
         }
     }
 
-
+    public float GetHealthPct()
+    {
+        return (currentHealth / maxHealth);
+    }
 
 }

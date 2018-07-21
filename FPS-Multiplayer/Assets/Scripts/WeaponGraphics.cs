@@ -1,33 +1,9 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Networking;
+﻿using UnityEngine;
 
-public class WeaponGraphics : NetworkBehaviour {
+public class WeaponGraphics : MonoBehaviour
+{
 
     public ParticleSystem muzzleFlash;
-    public GameObject hitEffect;
-  
+    public GameObject hitEffectPrefab;
 
-    void Update()
-    {
-        
-        PlayEffect();
-    }
-    void RpcShowEffect()
-    {
-        if (PlayerShoot.onFire)
-        {
-            muzzleFlash.Play();
-           
-        }
-       
-    }
-
-    void PlayEffect()
-    {
-        RpcShowEffect();
-    }
-
-   
 }

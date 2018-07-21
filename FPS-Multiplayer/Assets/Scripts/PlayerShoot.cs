@@ -1,18 +1,11 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Networking;
 
+[RequireComponent(typeof(WeaponManager))]
+public class PlayerShoot : NetworkBehaviour
+{
 
-public class PlayerShoot : NetworkBehaviour {
-
-    private PlayerWeapons currentWeapon;
-
-    private WeaponManager WM;
-
-    public GameObject hitEffect;
-
-    public static bool onFire = false;
+    private const string PLAYER_TAG = "Player";
 
     [SerializeField]
     private Camera cam;
@@ -20,95 +13,135 @@ public class PlayerShoot : NetworkBehaviour {
     [SerializeField]
     private LayerMask mask;
 
+    private PlayerWeapons currentWeapon;
+    private WeaponManager weaponManager;
+
     void Start()
     {
         if (cam == null)
         {
-            Debug.LogError("PlayerShoot: No Camera");
+            Debug.LogError("PlayerShoot: No camera referenced!");
             this.enabled = false;
         }
 
-        WM = GetComponent<WeaponManager>();
+        weaponManager = GetComponent<WeaponManager>();
     }
 
     void Update()
     {
-        currentWeapon = WM.GetCurrentWeapon();
+        currentWeapon = weaponManager.GetCurrentWeapon();
 
         if (PauseMenu.isOn)
             return;
+
+        if (currentWeapon.bullets < currentWeapon.maxBullets)
+        {
+            if (Input.GetButtonDown("Reload"))
+            {
+                weaponManager.Reload();
+                return;
+            }
+        }
 
         if (currentWeapon.fireRate <= 0f)
         {
             if (Input.GetButtonDown("Fire1"))
             {
                 Shoot();
-                onFire = false;
             }
         }
         else
         {
             if (Input.GetButtonDown("Fire1"))
             {
-                InvokeRepeating("Shoot", 0f,1f / currentWeapon.fireRate);
+                InvokeRepeating("Shoot", 0f, 1f / currentWeapon.fireRate);
+            }
+            else if (Input.GetButtonUp("Fire1"))
+            {
+                CancelInvoke("Shoot");
             }
         }
-        if (Input.GetButtonUp("Fire1"))
-        {
-            onFire = false;
-            CancelInvoke("Shoot");
-        }
-            
     }
+
+    //Is called on the server when a player shoots
     [Command]
-    void CmdShoot()
+    void CmdOnShoot()
     {
         RpcDoShootEffect();
     }
-    
+
+    //Is called on all clients when we need to to
+    // a shoot effect
+    [ClientRpc]
     void RpcDoShootEffect()
     {
-        onFire = true;
+        weaponManager.GetCurrentGraphics().muzzleFlash.Play();
     }
-   
-    [Client]
-    void Shoot()
-    {
-        if (!isLocalPlayer)
-            return;
-        CmdShoot();
-        RaycastHit hit;
-        if (Physics.Raycast(cam.transform.position,cam.transform.forward,out hit, currentWeapon.range, mask)) 
-        {
-            if (hit.collider.tag == "Player")
-            {
-                CmdPlayerShot(hit.collider.name, currentWeapon.damage);
-            }
 
-            CmdOnHit(hit.point, hit.normal);
-
-        }
-            
-    }
+    //Is called on the server when we hit something
+    //Takes in the hit point and the normal of the surface
     [Command]
-    void CmdPlayerShot(string _Id,int damage)
-    {
-        Debug.Log(_Id + " has been shot");
-
-        Player _player = GameManager.GetPlayer(_Id);
-        _player.RpcTakeDamage(damage);
-
-    }
-    [Command]
-    void CmdOnHit(Vector3 _pos , Vector3 _normal)
+    void CmdOnHit(Vector3 _pos, Vector3 _normal)
     {
         RpcDoHitEffect(_pos, _normal);
     }
+
+    //Is called on all clients
+    //Here we can spawn in cool effects
     [ClientRpc]
     void RpcDoHitEffect(Vector3 _pos, Vector3 _normal)
     {
-        GameObject hitIns = (GameObject)Instantiate(hitEffect, _pos,Quaternion.LookRotation(_normal));
-        Destroy(hitIns, 1f);
-        
+        GameObject _hitEffect = (GameObject)Instantiate(weaponManager.GetCurrentGraphics().hitEffectPrefab, _pos, Quaternion.LookRotation(_normal));
+        Destroy(_hitEffect, 2f);
     }
+
+    [Client]
+    void Shoot()
+    {
+        if (!isLocalPlayer || weaponManager.isReloading)
+        {
+            return;
+        }
+
+        if (currentWeapon.bullets <= 0)
+        {
+            weaponManager.Reload();
+            return;
+        }
+
+        currentWeapon.bullets--;
+
+        Debug.Log("Remaining bullets: " + currentWeapon.bullets);
+
+        //We are shooting, call the OnShoot method on the server
+        CmdOnShoot();
+
+        RaycastHit _hit;
+        if (Physics.Raycast(cam.transform.position, cam.transform.forward, out _hit, currentWeapon.range, mask))
+        {
+            if (_hit.collider.tag == PLAYER_TAG)
+            {
+                CmdPlayerShot(_hit.collider.name, currentWeapon.damage, transform.name);
+            }
+
+            // We hit something, call the OnHit method on the server
+            CmdOnHit(_hit.point, _hit.normal);
+        }
+
+        if (currentWeapon.bullets <= 0)
+        {
+            weaponManager.Reload();
+        }
+
+    }
+
+    [Command]
+    void CmdPlayerShot(string _playerID, int _damage, string _sourceID)
+    {
+        Debug.Log(_playerID + " has been shot.");
+
+        Player _player = GameManagers.GetPlayer(_playerID);
+        _player.RpcTakeDamage(_damage);
+    }
+
 }
