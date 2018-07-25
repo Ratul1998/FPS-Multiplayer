@@ -105,7 +105,6 @@ public class Player : NetworkBehaviour {
             Die();
             
         }
-        Debug.Log(transform.name + " now has " + currentHealth + " health.");
     }
     void Die()
     {

@@ -9,13 +9,20 @@ public class WeaponManager : NetworkBehaviour
     private string weaponLayerName = "Weapon";
 
     [SerializeField]
+    private AudioSource[] ReloadSound;
+
+    [SerializeField]
+    private Animator[] a;
+
+    [SerializeField]
     private Transform weaponHolder;
 
     [SerializeField]
     private PlayerWeapons primaryWeapon;
 
     private PlayerWeapons currentWeapon;
-    private WeaponGraphics currentGraphics;
+
+    public int Slot = 0;
 
     public bool isReloading = false;
 
@@ -29,24 +36,31 @@ public class WeaponManager : NetworkBehaviour
         return currentWeapon;
     }
 
-    public WeaponGraphics GetCurrentGraphics()
-    {
-        return currentGraphics;
-    }
-
     void EquipWeapon(PlayerWeapons _weapon)
     {
         currentWeapon = _weapon;
 
-        GameObject _weaponIns = (GameObject)Instantiate(_weapon.graphics, weaponHolder.position, Quaternion.identity);
-        _weaponIns.transform.SetParent(weaponHolder);
+        _weapon.graphics[Slot].SetActive(true);
 
-        currentGraphics = _weaponIns.GetComponent<WeaponGraphics>();
-        if (currentGraphics == null)
-            Debug.LogError("No WeaponGraphics component on the weapon object: " + _weaponIns.name);
+        
 
-        if (isLocalPlayer)
-            Utility.SetLayerRecursively(_weaponIns, LayerMask.NameToLayer(weaponLayerName));
+    }
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Alpha1))
+        {
+            Slot = 0;
+            currentWeapon.graphics[1].SetActive(false);
+            EquipWeapon(primaryWeapon);
+        }
+        else if (Input.GetKeyDown(KeyCode.Alpha2))
+        {
+            Slot = 1;
+            currentWeapon.graphics[0].SetActive(false);
+            EquipWeapon(primaryWeapon);
+        }
+
 
     }
 
@@ -60,11 +74,12 @@ public class WeaponManager : NetworkBehaviour
 
     private IEnumerator Reload_Coroutine()
     {
-        Debug.Log("Reloading...");
 
         isReloading = true;
 
         CmdOnReload();
+
+        ReloadSound[Slot].Play();
 
         yield return new WaitForSeconds(currentWeapon.reloadTime);
 
@@ -82,11 +97,7 @@ public class WeaponManager : NetworkBehaviour
     [ClientRpc]
     void RpcOnReload()
     {
-        Animator anim = currentGraphics.GetComponent<Animator>();
-        if (anim != null)
-        {
-            anim.SetTrigger("Reload");
-        }
+        a[Slot].SetTrigger("Reload");
     }
 
 }

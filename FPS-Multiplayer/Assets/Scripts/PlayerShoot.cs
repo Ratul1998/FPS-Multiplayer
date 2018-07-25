@@ -11,10 +11,19 @@ public class PlayerShoot : NetworkBehaviour
     private Camera cam;
 
     [SerializeField]
+    private ParticleSystem[] muzzleFlash;
+
+    [SerializeField]
+    private GameObject HitEffect;
+
+    [SerializeField]
     private LayerMask mask;
 
     private PlayerWeapons currentWeapon;
     private WeaponManager weaponManager;
+
+    [SerializeField]
+    private AudioSource[] GunFire;
 
     void Start()
     {
@@ -75,7 +84,7 @@ public class PlayerShoot : NetworkBehaviour
     [ClientRpc]
     void RpcDoShootEffect()
     {
-        weaponManager.GetCurrentGraphics().muzzleFlash.Play();
+        muzzleFlash[weaponManager.Slot].Play();
     }
 
     //Is called on the server when we hit something
@@ -91,8 +100,8 @@ public class PlayerShoot : NetworkBehaviour
     [ClientRpc]
     void RpcDoHitEffect(Vector3 _pos, Vector3 _normal)
     {
-        GameObject _hitEffect = (GameObject)Instantiate(weaponManager.GetCurrentGraphics().hitEffectPrefab, _pos, Quaternion.LookRotation(_normal));
-        Destroy(_hitEffect, 2f);
+        GameObject _hitEffect = (GameObject)Instantiate(HitEffect, _pos, Quaternion.LookRotation(_normal));
+        Destroy(_hitEffect, 1f);
     }
 
     [Client]
@@ -111,8 +120,6 @@ public class PlayerShoot : NetworkBehaviour
 
         currentWeapon.bullets--;
 
-        Debug.Log("Remaining bullets: " + currentWeapon.bullets);
-
         //We are shooting, call the OnShoot method on the server
         CmdOnShoot();
 
@@ -127,6 +134,7 @@ public class PlayerShoot : NetworkBehaviour
             // We hit something, call the OnHit method on the server
             CmdOnHit(_hit.point, _hit.normal);
         }
+        GunFire[weaponManager.Slot].Play();
 
         if (currentWeapon.bullets <= 0)
         {
