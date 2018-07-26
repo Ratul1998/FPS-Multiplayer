@@ -80,10 +80,10 @@ public class WeaponManager : NetworkBehaviour
         CmdOnReload();
 
         ReloadSound[Slot].Play();
-
-        yield return new WaitForSeconds(currentWeapon.reloadTime);
-
+        yield return new WaitForSeconds(1f);
         currentWeapon.bullets = currentWeapon.maxBullets;
+        yield return new WaitForSeconds(currentWeapon.reloadTime-1f);
+
 
         isReloading = false;
     }

@@ -100,7 +100,7 @@ public class PlayerShoot : NetworkBehaviour
     [ClientRpc]
     void RpcDoHitEffect(Vector3 _pos, Vector3 _normal)
     {
-        GameObject _hitEffect = (GameObject)Instantiate(HitEffect, _pos, Quaternion.LookRotation(_normal));
+        GameObject _hitEffect = (GameObject)Instantiate(HitEffect, _pos, Quaternion.FromToRotation(Vector3.up,_normal));
         Destroy(_hitEffect, 1f);
     }
 
